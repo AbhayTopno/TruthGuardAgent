@@ -23,12 +23,32 @@ def refresh_token():
 
     # Update the Flask environment variable
     os.environ["GCP_ACCESS_TOKEN"] = creds.token
-    print("[TOKEN REFRESHED ✅]", creds.expiry)
+    current_time = time.strftime("%Y-%m-%d %H:%M:%S")
+    print(f"[TOKEN REFRESHED ✅] {current_time} - Expires: {creds.expiry}")
 
-def schedule_refresh(interval=3500):
-    """Run token refresh every ~1 hour (3500s) in background."""
+def schedule_refresh(interval=2900):
+    """Run token refresh every specified interval (default: 2900s) in background."""
+    # Refresh immediately on startup
+    print(f"[TOKEN SCHEDULER] Starting with {interval}s refresh interval")
+    try:
+        refresh_token()
+    except Exception as e:
+        print(f"[TOKEN REFRESH ERROR] Initial refresh failed: {e}")
+    
+    # Schedule periodic refreshes
     def loop():
         while True:
-            refresh_token()
+            print(f"[TOKEN SCHEDULER] Waiting {interval}s until next refresh...")
             time.sleep(interval)
+            print(f"[TOKEN SCHEDULER] Refreshing token now...")
+            try:
+                refresh_token()
+            except Exception as e:
+                print(f"[TOKEN REFRESH ERROR] {e}")
+                
+                
     threading.Thread(target=loop, daemon=True).start()
+
+    # thread = threading.Thread(target=loop, daemon=True)
+    # thread.start()
+    # print(f"[TOKEN SCHEDULER] Background thread started (thread id: {thread.ident})")
