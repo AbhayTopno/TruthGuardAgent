@@ -1,5 +1,5 @@
 from core.schemas import RequestModel, Result, Evidence
-from integrations.adk_client import call_adk
+from integrations.adk_client_gcp import call_adk
 
 def verify(req: RequestModel) -> Result:
     adk_response = call_adk(req.text, {"channel": req.channel, "user": req.user})
