@@ -8,33 +8,18 @@ function ResultCard({ results }) {
   const [copied, setCopied] = useState(false);
 
   useEffect(() => {
-    // Animate card entrance
     gsap.fromTo(
       cardRef.current,
       { opacity: 0, y: 30, scale: 0.95 },
-      {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        duration: 0.6,
-        ease: 'back.out(1.5)',
-      }
+      { opacity: 1, y: 0, scale: 1, duration: 0.6, ease: 'back.out(1.5)' }
     );
 
-    // Animate verdict
     gsap.fromTo(
       verdictRef.current,
       { opacity: 0, x: -20 },
-      {
-        opacity: 1,
-        x: 0,
-        duration: 0.5,
-        delay: 0.3,
-        ease: 'power2.out',
-      }
+      { opacity: 1, x: 0, duration: 0.5, delay: 0.3, ease: 'power2.out' }
     );
 
-    // Stagger animate evidence items
     if (evidenceRef.current.length > 0) {
       gsap.fromTo(
         evidenceRef.current,
@@ -51,66 +36,133 @@ function ResultCard({ results }) {
     }
   }, [results]);
 
-  if (results.error) {
+  if (results?.error) {
     return (
-      <div className="backdrop-blur-xl bg-red-500/10 border-2 border-red-500/30 rounded-2xl p-6 text-center">
-        <div className="text-5xl mb-3">❌</div>
-        <div className="text-red-400 font-semibold text-lg">
+      <div className="backdrop-blur-xl bg-red-500/10 border-2 border-red-500/30 rounded-2xl p-4 sm:p-6 text-center">
+        <div className="text-4xl sm:text-5xl mb-3">❌</div>
+        <div className="text-red-400 font-semibold text-base sm:text-lg">
           {results.error}
         </div>
       </div>
     );
   }
 
-  // Normalize different response shapes (backend v1 vs v2)
-  const verdict = (
-    results?.verdict ||
-    results?.result?.verdict ||
-    'unverified'
-  )?.toString();
-  const confidenceRaw =
-    typeof results?.confidence === 'number'
-      ? results.confidence
-      : typeof results?.result?.confidence === 'number'
-      ? results.result.confidence
-      : undefined;
+  const resultData = results?.result || results || {};
+  const formatted = results?.formatted_response || resultData?.raw_final || '';
+
+  // strip fenced code blocks like ```markdown\n...\n```
+  const stripFences = (s) =>
+    typeof s === 'string'
+      ? s.replace(/^```(?:[\w-]+)?\n/, '').replace(/\n```$/, '')
+      : '';
+
+  // Robust extractor: matches **Field:** value, Field: value, tolerates stray asterisks
+  const extractFieldFromMarkdown = (md, field) => {
+    if (!md) return undefined;
+    const stripped = stripFences(md);
+
+    // 1) Try matching bolded pattern: **Field:** value
+    const boldRx = new RegExp(
+      `\\*+\\s*${field}\\s*\\*+[:：]?\\s*([^\n\r]+)`,
+      'i'
+    );
+    let m = stripped.match(boldRx);
+    if (m && m[1]) return m[1].trim();
+
+    // 2) Remove all asterisks and match "Field: value" at the start of any line (multiline)
+    const noStars = stripped.replace(/\*/g, '');
+    const lineRx = new RegExp(`^\\s*${field}\\s*[:：]\\s*([^\n\r]+)`, 'im');
+    m = noStars.match(lineRx);
+    if (m && m[1]) return m[1].trim();
+
+    // 3) As a last resort, search anywhere for "Field" followed by a number/word
+    const looseRx = new RegExp(`${field}\\s*[:：]?\\s*([\\d\\.]+|\\w+)`, 'i');
+    m = stripped.match(looseRx);
+    if (m && m[1]) return m[1].trim();
+
+    return undefined;
+  };
+
+  // --- Extract verdict & confidence from formatted_response first ---
+  let verdictRaw = undefined;
+  let confidenceRaw = undefined;
+
+  if (formatted) {
+    verdictRaw = extractFieldFromMarkdown(formatted, 'Verdict');
+    const confCandidate =
+      extractFieldFromMarkdown(formatted, 'Confidence') ||
+      extractFieldFromMarkdown(formatted, 'Confidence Score');
+    if (confCandidate !== undefined) {
+      // confidence may be "1.0", "0.7", "70", "70%"
+      const numberMatch = (confCandidate + '').match(/[\d.]+/);
+      if (numberMatch) {
+        confidenceRaw = parseFloat(numberMatch[0]);
+      } else {
+        // if not numeric, attempt to parse as string number
+        const parsed = parseFloat(confCandidate);
+        if (!isNaN(parsed)) confidenceRaw = parsed;
+      }
+    }
+  }
+
+  // fallback to resultData fields only when formatted_response didn't provide them
+  if (!verdictRaw) verdictRaw = resultData?.verdict;
+  if (confidenceRaw === undefined || confidenceRaw === null)
+    confidenceRaw = resultData?.confidence;
+
+  // Normalize verdict (string)
+  const verdict = (verdictRaw || 'unverified').toString().toLowerCase();
+
+  // Normalize confidence to percent number for UI: if between 0 and 1 scale to 0-100
   const confidence =
     typeof confidenceRaw === 'number'
       ? Math.round(confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw)
+      : typeof confidenceRaw === 'string' && !isNaN(parseFloat(confidenceRaw))
+      ? Math.round(
+          parseFloat(confidenceRaw) <= 1
+            ? parseFloat(confidenceRaw) * 100
+            : parseFloat(confidenceRaw)
+        )
       : undefined;
-  const evidence = Array.isArray(results?.evidence)
-    ? results.evidence
-    : Array.isArray(results?.result?.evidence)
-    ? results.result.evidence
-    : [];
-  const formatted =
-    results?.formatted_response || results?.result?.raw_final || '';
 
-  // Try to extract a short summary from formatted markdown if not provided
+  // Debug: remove in production
+  console.log('ResultCard raw results:', results);
+  console.log('Using formatted_response (stripped):', stripFences(formatted));
+  console.log('verdictRaw (from formatted or fallback):', verdictRaw);
+  console.log('confidenceRaw (from formatted or fallback):', confidenceRaw);
+  console.log(
+    'Displayed verdict:',
+    verdict,
+    'Displayed confidence (%):',
+    confidence
+  );
+
+  // Evidence array
+  let evidence = Array.isArray(resultData?.evidence) ? resultData.evidence : [];
+
+  // Summary: prefer resultData.summary, fallback to markdown extraction
   const extractSummary = (md) => {
     if (!md) return undefined;
-    // Strip code fences if present
-    const stripped = md
-      .replace(/^```(?:markdown)?\n/, '')
-      .replace(/\n```$/, '');
+    const stripped = stripFences(md);
     const lines = stripped.split(/\r?\n/);
-    const startIdx = lines.findIndex((l) =>
-      l.trim().toLowerCase().startsWith('### summary')
+    const startIdx = lines.findIndex(
+      (l) =>
+        l.trim().toLowerCase().startsWith('### summary') ||
+        l.trim().toLowerCase().startsWith('## summary')
     );
     if (startIdx === -1) return undefined;
-    let i = startIdx + 1;
     const acc = [];
-    while (i < lines.length && !/^###\s/.test(lines[i])) {
-      if (lines[i].trim().length) acc.push(lines[i]);
-      i++;
+    for (let i = startIdx + 1; i < lines.length; i++) {
+      if (/^###?\s+/.test(lines[i])) break;
+      if (lines[i].trim()) acc.push(lines[i].trim());
     }
     return acc.join(' ').trim();
   };
 
-  const summary = results?.summary || extractSummary(formatted);
+  const summary = resultData?.summary || extractSummary(formatted);
 
-  const isTrue = verdict?.toLowerCase().includes('true');
-  const isFalse = verdict?.toLowerCase().includes('false');
+  const isTrue = verdict.includes('true');
+  const isFalse = verdict.includes('false');
 
   const getVerdictColor = () => {
     if (isTrue) return 'from-green-500 to-emerald-600';
@@ -124,30 +176,32 @@ function ResultCard({ results }) {
     return '⚠️';
   };
 
-  const getConfidenceColor = (confidence) => {
-    if (confidence >= 80) return 'text-green-400';
-    if (confidence >= 50) return 'text-yellow-400';
+  const getConfidenceColor = (c) => {
+    if (c >= 80) return 'text-green-400';
+    if (c >= 50) return 'text-yellow-400';
     return 'text-red-400';
   };
 
   return (
     <div
       ref={cardRef}
-      className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 shadow-2xl"
+      className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl"
     >
       {/* Verdict Section */}
       <div
         ref={verdictRef}
-        className="flex items-center justify-between mb-6 pb-6 border-b border-white/20"
+        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 sm:gap-0 mb-6 pb-6 border-b border-white/20"
       >
-        <div className="flex items-center space-x-4">
-          <div className="text-6xl animate-bounce">{getVerdictIcon()}</div>
+        <div className="flex items-center space-x-3 sm:space-x-4">
+          <div className="text-4xl sm:text-5xl lg:text-6xl animate-bounce">
+            {getVerdictIcon()}
+          </div>
           <div>
-            <h3 className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">
+            <h3 className="text-white/60 text-xs sm:text-sm font-medium uppercase tracking-wider mb-1">
               Verdict
             </h3>
             <p
-              className={`text-3xl font-extrabold bg-gradient-to-r ${getVerdictColor()} bg-clip-text text-transparent`}
+              className={`text-2xl sm:text-3xl font-extrabold bg-gradient-to-r ${getVerdictColor()} bg-clip-text text-transparent capitalize`}
             >
               {verdict}
             </p>
@@ -156,19 +210,19 @@ function ResultCard({ results }) {
 
         {/* Confidence Score */}
         {confidence !== undefined && (
-          <div className="text-right">
-            <h4 className="text-white/60 text-sm font-medium uppercase tracking-wider mb-1">
+          <div className="w-full sm:w-auto sm:text-right">
+            <h4 className="text-white/60 text-xs sm:text-sm font-medium uppercase tracking-wider mb-1">
               Confidence
             </h4>
             <div className="flex items-center space-x-2">
-              <div className="relative w-32 h-3 bg-white/10 rounded-full overflow-hidden">
+              <div className="relative w-full sm:w-32 h-3 bg-white/10 rounded-full overflow-hidden">
                 <div
                   className={`absolute top-0 left-0 h-full bg-gradient-to-r ${getVerdictColor()} rounded-full transition-all duration-1000`}
                   style={{ width: `${confidence}%` }}
                 ></div>
               </div>
               <span
-                className={`text-2xl font-bold ${getConfidenceColor(
+                className={`text-xl sm:text-2xl font-bold ${getConfidenceColor(
                   confidence
                 )}`}
               >
@@ -182,9 +236,9 @@ function ResultCard({ results }) {
       {/* Evidence Section */}
       {evidence && evidence.length > 0 && (
         <div>
-          <h4 className="text-white font-semibold text-xl mb-4 flex items-center space-x-2">
+          <h4 className="text-white font-semibold text-lg sm:text-xl mb-4 flex items-center space-x-2">
             <svg
-              className="w-6 h-6 text-blue-400"
+              className="w-5 h-5 sm:w-6 sm:h-6 text-blue-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -203,12 +257,12 @@ function ResultCard({ results }) {
               <li
                 key={i}
                 ref={(el) => (evidenceRef.current[i] = el)}
-                className="flex items-start space-x-3 backdrop-blur-sm bg-white/5 p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
+                className="flex items-start space-x-2 sm:space-x-3 backdrop-blur-sm bg-white/5 p-3 sm:p-4 rounded-xl border border-white/10 hover:bg-white/10 transition-all duration-300"
               >
-                <span className="text-blue-400 font-bold text-lg flex-shrink-0">
+                <span className="text-blue-400 font-bold text-base sm:text-lg flex-shrink-0">
                   {i + 1}.
                 </span>
-                <span className="text-white/90 text-base leading-relaxed">
+                <span className="text-white/90 text-sm sm:text-base leading-relaxed">
                   {item}
                 </span>
               </li>
@@ -217,14 +271,14 @@ function ResultCard({ results }) {
         </div>
       )}
 
-      {/* Summary if available */}
+      {/* Summary */}
       {summary && (
         <div className="mt-6 pt-6 border-t border-white/20">
-          <h4 className="text-white font-semibold text-lg mb-3 flex items-center space-x-2">
-            <span className="text-2xl">📝</span>
+          <h4 className="text-white font-semibold text-base sm:text-lg mb-3 flex items-center space-x-2">
+            <span className="text-xl sm:text-2xl">📝</span>
             <span>Summary</span>
           </h4>
-          <p className="text-white/80 text-base leading-relaxed backdrop-blur-sm bg-white/5 p-4 rounded-xl border border-white/10">
+          <p className="text-white/80 text-sm sm:text-base leading-relaxed backdrop-blur-sm bg-white/5 p-3 sm:p-4 rounded-xl border border-white/10">
             {summary}
           </p>
         </div>
@@ -234,39 +288,33 @@ function ResultCard({ results }) {
       {formatted && (
         <div className="mt-6 pt-6 border-t border-white/20">
           <div className="flex items-center justify-between mb-3">
-            <h4 className="text-white font-semibold text-lg flex items-center space-x-2">
-              <span className="text-2xl">📄</span>
+            <h4 className="text-white font-semibold text-base sm:text-lg flex items-center space-x-2">
+              <span className="text-xl sm:text-2xl">📄</span>
               <span>Full Report</span>
             </h4>
             <button
               onClick={async () => {
                 try {
-                  await navigator.clipboard.writeText(
-                    formatted
-                      .replace(/^```(?:markdown)?\n/, '')
-                      .replace(/\n```$/, '')
-                  );
+                  await navigator.clipboard.writeText(stripFences(formatted));
                   setCopied(true);
                   setTimeout(() => setCopied(false), 1200);
                 } catch (_) {}
               }}
-              className="text-sm px-3 py-1 rounded-full border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition"
+              className="text-xs sm:text-sm px-2 sm:px-3 py-1 rounded-full border border-white/20 text-white/80 hover:text-white hover:border-white/40 transition"
             >
               {copied ? 'Copied' : 'Copy'}
             </button>
           </div>
-          <div className="backdrop-blur-sm bg-white/5 p-4 rounded-xl border border-white/10 overflow-auto max-h-96">
-            <pre className="text-white/80 text-sm leading-relaxed whitespace-pre-wrap">
-              {formatted
-                .replace(/^```(?:markdown)?\n/, '')
-                .replace(/\n```$/, '')}
+          <div className="backdrop-blur-sm bg-white/5 p-3 sm:p-4 rounded-xl border border-white/10 overflow-auto max-h-96">
+            <pre className="text-white/80 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap">
+              {stripFences(formatted)}
             </pre>
           </div>
         </div>
       )}
 
       {/* Timestamp */}
-      <div className="mt-6 text-center text-white/40 text-sm">
+      <div className="mt-6 text-center text-white/40 text-xs sm:text-sm">
         <span>Verified at {new Date().toLocaleString()}</span>
       </div>
     </div>

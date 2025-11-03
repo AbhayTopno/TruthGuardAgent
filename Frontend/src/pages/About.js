@@ -43,36 +43,38 @@ function About() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pt-28 pb-12 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pt-20 sm:pt-24 pb-8 sm:pb-12 px-3 sm:px-4 lg:px-6">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/4 w-96 h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/3 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/3 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-blue-500/10 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/3 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-purple-500/10 rounded-full blur-3xl"></div>
       </div>
 
       <div className="max-w-5xl mx-auto relative z-10">
         {/* Title */}
-        <div ref={titleRef} className="text-center mb-12">
-          <h1 className="text-5xl font-extrabold mb-3 bg-gradient-to-r from-blue-300 via-purple-300 to-pink-300 bg-clip-text text-transparent drop-shadow-lg">
+        <div ref={titleRef} className="text-center mb-8 sm:mb-12">
+          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-3 bg-gradient-to-r from-blue-300 via-purple-300 to-pink-300 bg-clip-text text-transparent drop-shadow-lg px-2">
             About TruthGuard
           </h1>
-          <div className="h-1 w-24 mx-auto bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></div>
+          <div className="h-1 w-16 sm:w-24 mx-auto bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></div>
         </div>
 
         {/* Main Description */}
         <div
           ref={(el) => (sectionsRef.current[0] = el)}
-          className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 mb-6 hover:bg-white/15 transition-all duration-300"
+          className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 hover:bg-white/15 transition-all duration-300"
         >
-          <p className="text-lg text-white leading-relaxed mb-4">
-            <strong className="text-xl text-blue-300">TruthGuard</strong> is a
-            comprehensive AI-powered fact-checking platform designed to combat
-            misinformation across all digital channels. Built with cutting-edge
-            technology and a commitment to truth, we provide real-time
-            verification services that help users distinguish fact from fiction
-            in today's information-saturated world. 🛡️
+          <p className="text-base sm:text-lg text-white leading-relaxed mb-3 sm:mb-4">
+            <strong className="text-lg sm:text-xl text-blue-300">
+              TruthGuard
+            </strong>{' '}
+            is a comprehensive AI-powered fact-checking platform designed to
+            combat misinformation across all digital channels. Built with
+            cutting-edge technology and a commitment to truth, we provide
+            real-time verification services that help users distinguish fact
+            from fiction in today's information-saturated world. 🛡️
           </p>
-          <p className="text-base text-white/90 leading-relaxed">
+          <p className="text-sm sm:text-base text-white/90 leading-relaxed">
             Our platform integrates seamlessly with WhatsApp, Telegram, web
             browsers, and desktop applications, making fact-checking accessible
             wherever you need it. Using advanced AI algorithms, natural language
@@ -84,17 +86,19 @@ function About() {
         {/* What We Do Section */}
         <div
           ref={(el) => (sectionsRef.current[1] = el)}
-          className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 mb-6"
+          className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6"
         >
-          <div className="flex items-center space-x-3 mb-4">
-            <span className="text-4xl">💡</span>
-            <h2 className="text-2xl font-bold text-white">What We Do</h2>
+          <div className="flex items-center space-x-2 sm:space-x-3 mb-3 sm:mb-4">
+            <span className="text-3xl sm:text-4xl">💡</span>
+            <h2 className="text-xl sm:text-2xl font-bold text-white">
+              What We Do
+            </h2>
           </div>
-          <p className="text-base text-white/90 leading-relaxed mb-4">
+          <p className="text-sm sm:text-base text-white/90 leading-relaxed mb-3 sm:mb-4">
             TruthGuard analyzes claims, news articles, social media posts, and
             viral messages using multiple verification techniques:
           </p>
-          <ul className="space-y-2 text-white/80">
+          <ul className="space-y-2 text-white/80 text-sm sm:text-base">
             <li className="flex items-start space-x-2">
               <span className="text-green-400">✓</span>
               <span>

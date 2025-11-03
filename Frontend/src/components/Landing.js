@@ -133,7 +133,7 @@ function Landing() {
   return (
     <section
       ref={heroRef}
-      className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pt-28 pb-16"
+      className="min-h-screen relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pt-20 sm:pt-24 lg:pt-28 pb-12 sm:pb-16"
     >
       {/* Animated Background Elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -158,22 +158,22 @@ function Landing() {
       </div>
 
       {/* Content Container */}
-      <div className="relative z-10 flex flex-col justify-start items-center px-6 py-8">
+      <div className="relative z-10 flex flex-col justify-start items-center px-3 sm:px-4 lg:px-6 py-6 sm:py-8">
         {/* Main Title with Glassmorphism */}
         <div
           ref={titleRef}
-          className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-6 mb-6 shadow-2xl"
+          className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 mb-4 sm:mb-6 shadow-2xl"
         >
-          <h1 className="text-5xl md:text-6xl font-extrabold text-center bg-gradient-to-r from-blue-300 via-purple-300 to-pink-300 bg-clip-text text-transparent leading-tight drop-shadow-lg pb-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold text-center bg-gradient-to-r from-blue-300 via-purple-300 to-pink-300 bg-clip-text text-transparent leading-tight drop-shadow-lg pb-3 sm:pb-4">
             TruthGuard Agent
           </h1>
-          <div className="mt-3 h-1 w-24 mx-auto bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></div>
+          <div className="mt-2 sm:mt-3 h-1 w-16 sm:w-24 mx-auto bg-gradient-to-r from-blue-400 to-purple-400 rounded-full"></div>
         </div>
 
         {/* Subtitle */}
         <p
           ref={subtitleRef}
-          className="max-w-3xl mb-8 text-center text-lg md:text-xl font-medium text-white leading-relaxed backdrop-blur-sm bg-white/10 p-5 rounded-2xl border border-white/20 shadow-lg"
+          className="max-w-3xl mb-6 sm:mb-8 text-center text-sm sm:text-base md:text-lg lg:text-xl font-medium text-white leading-relaxed backdrop-blur-sm bg-white/10 p-4 sm:p-5 rounded-xl sm:rounded-2xl border border-white/20 shadow-lg"
         >
           AI-powered fact verification across{' '}
           <span className="text-blue-400 font-bold">web</span>,{' '}
@@ -184,26 +184,26 @@ function Landing() {
         </p>
 
         {/* Tech Stack Cards */}
-        <div className="mb-8">
-          <h3 className="text-center text-white/80 font-semibold text-base mb-4 tracking-wider uppercase">
+        <div className="mb-6 sm:mb-8">
+          <h3 className="text-center text-white/80 font-semibold text-sm sm:text-base mb-3 sm:mb-4 tracking-wider uppercase">
             Powered By
           </h3>
-          <div className="flex flex-wrap justify-center gap-3 max-w-4xl">
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 max-w-4xl px-2">
             {techStack.map((tech, index) => (
               <div
                 key={tech.name}
                 ref={(el) => (cardsRef.current[index] = el)}
-                className="group relative backdrop-blur-md bg-white/10 hover:bg-white/20 border border-white/20 rounded-xl px-4 py-2 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-xl hover:px-5 hover:py-3"
+                className="group relative backdrop-blur-md bg-white/10 hover:bg-white/20 border border-white/20 rounded-lg sm:rounded-xl px-3 py-1.5 sm:px-4 sm:py-2 transition-all duration-300 cursor-pointer hover:scale-105 hover:shadow-xl sm:hover:px-5 sm:hover:py-3"
               >
-                <div className="flex items-center space-x-2">
-                  <span className="text-xl">{tech.icon}</span>
-                  <span className="font-semibold text-white text-sm">
+                <div className="flex items-center space-x-1.5 sm:space-x-2">
+                  <span className="text-base sm:text-xl">{tech.icon}</span>
+                  <span className="font-semibold text-white text-xs sm:text-sm">
                     {tech.name}
                   </span>
                 </div>
                 {/* Gradient border effect on hover */}
                 <div
-                  className={`absolute inset-0 rounded-xl bg-gradient-to-r ${tech.color} opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-lg`}
+                  className={`absolute inset-0 rounded-lg sm:rounded-xl bg-gradient-to-r ${tech.color} opacity-0 group-hover:opacity-20 transition-opacity duration-300 blur-lg`}
                 ></div>
               </div>
             ))}
@@ -214,9 +214,9 @@ function Landing() {
         <button
           ref={ctaRef}
           onClick={() => navigate('/console')}
-          className="relative group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-3 px-8 rounded-full text-lg font-bold shadow-2xl transition-all duration-300 overflow-hidden mb-12"
+          className="relative group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-2.5 px-6 sm:py-3 sm:px-8 rounded-full text-base sm:text-lg font-bold shadow-2xl transition-all duration-300 overflow-hidden mb-8 sm:mb-12"
         >
-          <span className="relative z-10 flex items-center space-x-2">
+          <span className="relative z-10 flex items-center space-x-1.5 sm:space-x-2">
             <span>🚀 Try Fact Checking Console</span>
           </span>
           {/* Animated shine effect */}

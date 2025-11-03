@@ -14,7 +14,6 @@ function Console() {
   const buttonRef = useRef(null);
 
   useEffect(() => {
-    // Animate on mount
     gsap.fromTo(
       titleRef.current,
       { opacity: 0, y: -30 },
@@ -35,7 +34,6 @@ function Console() {
     setLoading(true);
     setResults(null);
 
-    // Button loading animation
     gsap.to(buttonRef.current, {
       scale: 0.95,
       duration: 0.1,
@@ -47,16 +45,22 @@ function Console() {
       const res = await api.post('/verify_for_frontend_extension_app', {
         text,
       });
+
+      // Debug: log raw response so you can see formatted_response
+      console.log('API response (res.data):', res.data);
+
+      // store full response object — ResultCard will extract verdict/confidence from formatted_response
       setResults(res.data);
     } catch (err) {
+      console.error('Verification API error:', err);
       setResults({ error: 'Verification failed, try again.' });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleTextChange = (e) => {
     setText(e.target.value);
-    // Subtle animation on typing
     gsap.to(textareaRef.current, {
       boxShadow: '0 0 20px rgba(59, 130, 246, 0.3)',
       duration: 0.3,
@@ -70,50 +74,50 @@ function Console() {
     });
   };
 
+  // helper to safely strip code fences
+  const stripFences = (s) =>
+    typeof s === 'string'
+      ? s.replace(/^```(?:markdown)?\n/, '').replace(/\n```$/, '')
+      : '';
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pt-24 pb-12 px-4">
-      {/* Background Effects */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pt-20 sm:pt-24 pb-8 sm:pb-12 px-3 sm:px-4">
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-700"></div>
+        <div className="absolute top-1/4 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-700"></div>
       </div>
 
       <div ref={containerRef} className="max-w-4xl mx-auto relative z-10">
-        {/* Title */}
-        <div ref={titleRef} className="text-center mb-8">
-          <h2 className="text-5xl font-extrabold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+        <div ref={titleRef} className="text-center mb-6 sm:mb-8">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-3 sm:mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
             Verification Console
           </h2>
-          <p className="text-white/70 text-lg">
+          <p className="text-white/70 text-base sm:text-lg px-4">
             Paste any text, news, or claim to verify its authenticity
           </p>
-          <div className="mt-4 h-1 w-24 mx-auto bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+          <div className="mt-3 sm:mt-4 h-1 w-16 sm:w-24 mx-auto bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
         </div>
 
-        {/* Console Form */}
         <form
           ref={formRef}
           onSubmit={handleSubmit}
-          className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 shadow-2xl mb-8"
+          className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 shadow-2xl mb-6 sm:mb-8"
         >
           <div className="relative">
             <textarea
               ref={textareaRef}
-              className="w-full h-48 p-6 rounded-2xl border-2 border-white/20 bg-white/5 backdrop-blur-sm text-white placeholder-white/40 focus:outline-none focus:border-blue-400 transition-all duration-300 resize-none font-mono text-base"
-              placeholder="🔍 Paste news, tweets, or any text to verify...
-              
-Example: 'Scientists have discovered a new planet in our solar system.'"
+              className="w-full h-40 sm:h-48 p-4 sm:p-6 rounded-xl sm:rounded-2xl border-2 border-white/20 bg-white/5 backdrop-blur-sm text-white placeholder-white/40 focus:outline-none focus:border-blue-400 transition-all duration-300 resize-none font-mono text-sm sm:text-base"
+              placeholder="🔍 Paste news, tweets, or any text to verify..."
               value={text}
               onChange={handleTextChange}
               onBlur={handleTextBlur}
             />
-            {/* Character counter */}
-            <div className="absolute bottom-4 right-4 text-white/40 text-sm">
+            <div className="absolute bottom-3 sm:bottom-4 right-3 sm:right-4 text-white/40 text-xs sm:text-sm">
               {text.length} characters
             </div>
           </div>
 
-          <div className="flex items-center justify-between mt-6">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-0 mt-4 sm:mt-6">
             <button
               type="button"
               onClick={() => {
@@ -124,10 +128,10 @@ Example: 'Scientists have discovered a new planet in our solar system.'"
                   { scale: 0.98, duration: 0.1, yoyo: true, repeat: 1 }
                 );
               }}
-              className="text-white/60 hover:text-white/90 transition-colors duration-200 flex items-center space-x-2"
+              className="text-white/60 hover:text-white/90 transition-colors duration-200 flex items-center justify-center sm:justify-start space-x-2 py-2 sm:py-0"
             >
               <svg
-                className="w-5 h-5"
+                className="w-4 h-4 sm:w-5 sm:h-5"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -139,19 +143,19 @@ Example: 'Scientists have discovered a new planet in our solar system.'"
                   d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
                 />
               </svg>
-              <span>Clear</span>
+              <span className="text-sm sm:text-base">Clear</span>
             </button>
 
             <button
               ref={buttonRef}
               type="submit"
-              className="relative group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-3 px-8 rounded-full font-semibold shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-3 overflow-hidden"
+              className="relative group bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-3 px-6 sm:px-8 rounded-full font-semibold shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 sm:space-x-3 overflow-hidden text-sm sm:text-base"
               disabled={loading || !text.trim()}
             >
               {loading ? (
                 <>
                   <svg
-                    className="animate-spin h-5 w-5"
+                    className="animate-spin h-4 w-4 sm:h-5 sm:w-5"
                     xmlns="http://www.w3.org/2000/svg"
                     fill="none"
                     viewBox="0 0 24 24"
@@ -175,7 +179,7 @@ Example: 'Scientists have discovered a new planet in our solar system.'"
               ) : (
                 <>
                   <svg
-                    className="w-5 h-5"
+                    className="w-4 h-4 sm:w-5 sm:h-5"
                     fill="none"
                     stroke="currentColor"
                     viewBox="0 0 24 24"
@@ -190,22 +194,15 @@ Example: 'Scientists have discovered a new planet in our solar system.'"
                   <span>Check Facts</span>
                 </>
               )}
-              {/* Shine effect */}
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
             </button>
           </div>
         </form>
 
-        {/* Results */}
-        {results && (
-          <div className="animate-fadeIn">
-            <ResultCard results={results} />
-          </div>
-        )}
+        {results && <ResultCard results={results} />}
 
-        {/* Tips Section */}
         {!results && !loading && (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mt-6 sm:mt-8">
             {[
               {
                 icon: '💡',
@@ -222,14 +219,16 @@ Example: 'Scientists have discovered a new planet in our solar system.'"
                 title: 'Fast Check',
                 text: 'Get results in seconds with AI analysis',
               },
-            ].map((tip, index) => (
+            ].map((tip) => (
               <div
                 key={tip.title}
-                className="backdrop-blur-lg bg-white/5 border border-white/10 rounded-2xl p-4 hover:bg-white/10 transition-all duration-300"
+                className="backdrop-blur-lg bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-3 sm:p-4 hover:bg-white/10 transition-all duration-300"
               >
-                <div className="text-3xl mb-2">{tip.icon}</div>
-                <h4 className="text-white font-semibold mb-1">{tip.title}</h4>
-                <p className="text-white/60 text-sm">{tip.text}</p>
+                <div className="text-2xl sm:text-3xl mb-2">{tip.icon}</div>
+                <h4 className="text-white font-semibold mb-1 text-sm sm:text-base">
+                  {tip.title}
+                </h4>
+                <p className="text-white/60 text-xs sm:text-sm">{tip.text}</p>
               </div>
             ))}
           </div>

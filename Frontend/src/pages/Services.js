@@ -109,71 +109,73 @@ function Services() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pt-24 pb-12 px-6">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 pt-20 sm:pt-24 pb-8 sm:pb-12 px-3 sm:px-4 lg:px-6">
       {/* Background Effects */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-700"></div>
+        <div className="absolute top-1/4 left-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-blue-500/20 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-64 sm:w-96 h-64 sm:h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse delay-700"></div>
       </div>
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Title */}
         <div
           ref={titleRef}
-          className="text-center mb-16"
+          className="text-center mb-8 sm:mb-12 lg:mb-16"
           style={{ opacity: 0 }}
         >
-          <h1 className="text-6xl font-extrabold mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold mb-3 sm:mb-4 bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent px-2">
             Our Services
           </h1>
-          <p className="text-white/70 text-xl max-w-2xl mx-auto">
+          <p className="text-white/70 text-sm sm:text-base md:text-lg lg:text-xl max-w-2xl mx-auto px-4">
             Multi-platform fact verification solutions tailored to your needs
           </p>
-          <div className="mt-6 h-1 w-32 mx-auto bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
+          <div className="mt-4 sm:mt-6 h-1 w-20 sm:w-32 mx-auto bg-gradient-to-r from-blue-500 to-purple-500 rounded-full"></div>
         </div>
 
         {/* Services Sections - Horizontal Layout (Text Left, Images Right) */}
-        <div className="space-y-12 mb-16">
+        <div className="space-y-6 sm:space-y-8 lg:space-y-12 mb-8 sm:mb-12 lg:mb-16">
           {services.map((service, index) => (
             <div
               key={index}
               ref={(el) => (sectionsRef.current[index] = el)}
-              className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-8 hover:bg-white/15 transition-all duration-700 hover:shadow-2xl hover:border-white/30"
+              className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 hover:bg-white/15 transition-all duration-700 hover:shadow-2xl hover:border-white/30"
               style={{ opacity: 0 }}
             >
               {/* Horizontal Layout: Conditional order based on service */}
               <div
-                className={`flex flex-col lg:flex-row gap-8 items-start ${
+                className={`flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8 items-start ${
                   service.title === 'WhatsApp Verification'
                     ? 'lg:flex-row-reverse'
                     : ''
                 }`}
               >
                 {/* Text Content */}
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 w-full">
                   {/* Service Header */}
-                  <div className="flex items-center gap-4 mb-6">
-                    <div className="text-7xl">{service.icon}</div>
+                  <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 mb-4 sm:mb-6">
+                    <div className="text-4xl sm:text-5xl lg:text-7xl flex-shrink-0">
+                      {service.icon}
+                    </div>
                     <h2
-                      className={`text-5xl font-bold pb-4 bg-gradient-to-r ${service.color} bg-clip-text text-transparent`}
+                      className={`text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold pb-2 sm:pb-4 bg-gradient-to-r ${service.color} bg-clip-text text-transparent break-words`}
                     >
                       {service.title}
                     </h2>
                   </div>
 
-                  <p className="text-white/80 text-xl mb-8 leading-relaxed">
+                  <p className="text-white/80 text-sm sm:text-base lg:text-xl mb-4 sm:mb-6 lg:mb-8 leading-relaxed">
                     {service.description}
                   </p>
 
                   {/* Features */}
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-wrap gap-2 sm:gap-3">
                     {service.features.map((feature, idx) => (
                       <div
                         key={idx}
-                        className="flex items-center space-x-2 backdrop-blur-sm bg-white/5 px-4 py-2.5 rounded-full border border-white/10"
+                        className="flex items-center space-x-1.5 sm:space-x-2 backdrop-blur-sm bg-white/5 px-2.5 sm:px-3 lg:px-4 py-1.5 sm:py-2 lg:py-2.5 rounded-full border border-white/10"
                       >
                         <svg
-                          className="w-5 h-5 text-green-400 flex-shrink-0"
+                          className="w-3.5 h-3.5 sm:w-4 sm:h-4 lg:w-5 lg:h-5 text-green-400 flex-shrink-0"
                           fill="none"
                           stroke="currentColor"
                           viewBox="0 0 24 24"
@@ -185,7 +187,7 @@ function Services() {
                             d="M5 13l4 4L19 7"
                           />
                         </svg>
-                        <span className="text-white/70 text-base">
+                        <span className="text-white/70 text-xs sm:text-sm lg:text-base whitespace-nowrap">
                           {feature}
                         </span>
                       </div>
@@ -204,24 +206,24 @@ function Services() {
         </div>
 
         {/* Bottom CTA */}
-        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-3xl p-12 text-center">
-          <h3 className="text-4xl font-bold text-white mb-4">
+        <div className="backdrop-blur-xl bg-white/10 border border-white/20 rounded-2xl sm:rounded-3xl p-6 sm:p-8 lg:p-12 text-center">
+          <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3 sm:mb-4 px-2">
             Ready to Get Started?
           </h3>
-          <p className="text-white/70 text-lg mb-8 max-w-2xl mx-auto">
+          <p className="text-white/70 text-sm sm:text-base lg:text-lg mb-6 sm:mb-8 max-w-2xl mx-auto px-4">
             Choose any platform and start verifying information today. All
             services are integrated with our powerful AI engine.
           </p>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap justify-center gap-3 sm:gap-4">
             <a
               href="/console"
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-4 px-8 rounded-full font-bold shadow-lg transition-all duration-300 hover:scale-105"
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white py-3 sm:py-4 px-6 sm:px-8 rounded-full font-bold shadow-lg transition-all duration-300 hover:scale-105 text-sm sm:text-base"
             >
               Try Console Now
             </a>
             <a
               href="/playground"
-              className="backdrop-blur-lg bg-white/10 border-2 border-white/30 hover:bg-white/20 text-white py-4 px-8 rounded-full font-bold transition-all duration-300 hover:scale-105"
+              className="backdrop-blur-lg bg-white/10 border-2 border-white/30 hover:bg-white/20 text-white py-3 sm:py-4 px-6 sm:px-8 rounded-full font-bold transition-all duration-300 hover:scale-105 text-sm sm:text-base"
             >
               Explore Playground
             </a>
