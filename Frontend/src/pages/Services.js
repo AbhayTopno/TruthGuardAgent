@@ -257,17 +257,6 @@ function Services() {
                         </svg>
                         <span>{service.downloadText}</span>
                       </a>
-                      <p className="mt-3 text-white/60 text-xs sm:text-sm">
-                        💡 <strong>Installation:</strong> Extract the ZIP and
-                        load it as an unpacked extension in Chrome/Edge/Brave.{' '}
-                        <a
-                          href="/downloads/INSTALLATION_GUIDE.md"
-                          target="_blank"
-                          className="text-purple-300 hover:text-purple-200 underline"
-                        >
-                          View detailed guide
-                        </a>
-                      </p>
                     </div>
                   )}
                 </div>
