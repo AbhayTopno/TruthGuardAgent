@@ -10,6 +10,13 @@ function Services() {
   const titleRef = useRef(null);
   const sectionsRef = useRef([]);
 
+  // Get contact info from environment variables
+  const whatsappNumber = process.env.REACT_APP_WHATSAPP_NUMBER;
+  const telegramBotUrl = process.env.REACT_APP_TELEGRAM_BOT_URL;
+
+  // Format WhatsApp number for URL (remove spaces, parentheses, and dashes)
+  const whatsappUrl = `https://wa.me/${whatsappNumber.replace(/[^\d+]/g, '')}`;
+
   useEffect(() => {
     // Smooth title animation with gentle fade
     gsap.fromTo(
@@ -67,6 +74,8 @@ function Services() {
           alt: 'Browser extension verification result',
         },
       ],
+      downloadLink: '/downloads/TrustGuard-Extension.zip',
+      downloadText: 'Download Extension',
     },
     {
       icon: '💬',
@@ -86,6 +95,8 @@ function Services() {
           alt: 'WhatsApp verification bot in action',
         },
       ],
+      link: whatsappUrl,
+      linkText: 'Chat on WhatsApp',
     },
     {
       icon: '✈️',
@@ -105,6 +116,8 @@ function Services() {
           alt: 'Telegram bot verification',
         },
       ],
+      link: telegramBotUrl,
+      linkText: 'Open Telegram Bot',
     },
   ];
 
@@ -193,6 +206,70 @@ function Services() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Call to Action Link */}
+                  {service.link && (
+                    <div className="mt-6">
+                      <a
+                        href={service.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`inline-flex items-center space-x-2 bg-gradient-to-r ${service.color} hover:opacity-90 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-full font-semibold shadow-lg transition-all duration-300 hover:scale-105 text-sm sm:text-base`}
+                      >
+                        <span>{service.linkText}</span>
+                        <svg
+                          className="w-4 h-4 sm:w-5 sm:h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"
+                          />
+                        </svg>
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Download Link for Extension */}
+                  {service.downloadLink && (
+                    <div className="mt-6">
+                      <a
+                        href={service.downloadLink}
+                        download="TrustGuard-Extension.zip"
+                        className={`inline-flex items-center space-x-2 bg-gradient-to-r ${service.color} hover:opacity-90 text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-full font-semibold shadow-lg transition-all duration-300 hover:scale-105 text-sm sm:text-base`}
+                      >
+                        <svg
+                          className="w-4 h-4 sm:w-5 sm:h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                          />
+                        </svg>
+                        <span>{service.downloadText}</span>
+                      </a>
+                      <p className="mt-3 text-white/60 text-xs sm:text-sm">
+                        💡 <strong>Installation:</strong> Extract the ZIP and
+                        load it as an unpacked extension in Chrome/Edge/Brave.{' '}
+                        <a
+                          href="/downloads/INSTALLATION_GUIDE.md"
+                          target="_blank"
+                          className="text-purple-300 hover:text-purple-200 underline"
+                        >
+                          View detailed guide
+                        </a>
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Images */}

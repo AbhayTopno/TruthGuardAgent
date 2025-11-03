@@ -13,7 +13,11 @@ export default defineConfig({
       },
       output: {
         entryFileNames: '[name].js',
-        chunkFileNames: '[name].js',
+        chunkFileNames: (chunkInfo) => {
+          // Prevent underscore-prefixed filenames (Chrome extension restriction)
+          const name = chunkInfo.name.replace(/^_/, 'c-');
+          return `${name}.js`;
+        },
         assetFileNames: '[name].[ext]',
       },
     },

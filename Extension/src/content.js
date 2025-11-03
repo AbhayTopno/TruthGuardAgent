@@ -14,6 +14,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === 'scrapePage') {
     const pageData = scrapePageContent();
     sendResponse({ success: true, data: pageData });
+  } else if (request.action === 'getSelectedText') {
+    const selectedText = window.getSelection().toString().trim();
+    if (selectedText) {
+      sendResponse({
+        success: true,
+        text: selectedText,
+        title: document.title,
+        url: window.location.href,
+      });
+    } else {
+      sendResponse({ success: false, message: 'No text selected' });
+    }
   } else if (request.action === 'enableSelection') {
     enableSelectionMode();
     sendResponse({ success: true });
@@ -197,17 +209,27 @@ async function handleMouseUp(e) {
   // Show loading state
   showLoadingInSelection();
 
-  // Simulate sending to API
-  setTimeout(() => {
-    const result = {
-      verdict: 'true',
-      message: 'This fact is true',
-      confidence: 0.95,
-      summary: 'The selected information has been verified.',
-      selectedText:
-        selectedText.substring(0, 200) +
-        (selectedText.length > 200 ? '...' : ''),
-    };
+  try {
+    // Send to actual API
+    const response = await fetch(
+      'http://34.122.181.2:8080/verify_for_frontend_extension_app',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          text: selectedText,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(`API request failed: ${response.statusText}`);
+    }
+
+    const apiData = await response.json();
+    console.log('Selection API response:', apiData);
 
     // Store data for download
     currentSelectionData = {
@@ -215,16 +237,26 @@ async function handleMouseUp(e) {
       url: window.location.href,
       title: document.title,
       timestamp: new Date().toISOString(),
-      result: result,
+      result: apiData,
     };
 
-    showResultInSelection(result);
+    showResultInSelection(apiData);
 
-    // Auto-close after 8 seconds (more time to download)
+    // Auto-close after 10 seconds (more time to download)
     setTimeout(() => {
       disableSelectionMode();
-    }, 8000);
-  }, 1500);
+    }, 10000);
+  } catch (error) {
+    console.error('Selection API error:', error);
+
+    // Show error in selection box
+    showErrorInSelection(error.message);
+
+    // Auto-close after 5 seconds
+    setTimeout(() => {
+      disableSelectionMode();
+    }, 5000);
+  }
 }
 
 function handleKeyDown(e) {
@@ -287,11 +319,45 @@ function showLoadingInSelection() {
 }
 
 function showResultInSelection(result) {
-  const isTrue = result.verdict === 'true';
-  const bgColor = isTrue ? '#dcfce7' : '#fee2e2';
-  const borderColor = isTrue ? '#22c55e' : '#ef4444';
-  const textColor = isTrue ? '#166534' : '#991b1b';
-  const icon = isTrue ? '✓' : '✗';
+  // Parse API response (same logic as Popup.jsx)
+  const resultData = result?.result || result || {};
+  const formatted = result?.formatted_response || resultData?.raw_final || '';
+
+  // Extract verdict
+  let verdictRaw = extractFieldFromMarkdown(formatted, 'Verdict');
+  if (!verdictRaw) verdictRaw = resultData?.verdict;
+  const verdict = (verdictRaw || 'unverified').toString().toLowerCase();
+
+  // Extract confidence
+  let confidenceRaw =
+    extractFieldFromMarkdown(formatted, 'Confidence') ||
+    extractFieldFromMarkdown(formatted, 'Confidence Score');
+  if (confidenceRaw !== undefined) {
+    const numberMatch = (confidenceRaw + '').match(/[\d.]+/);
+    if (numberMatch) {
+      confidenceRaw = parseFloat(numberMatch[0]);
+    }
+  }
+  if (confidenceRaw === undefined || confidenceRaw === null) {
+    confidenceRaw = resultData?.confidence;
+  }
+  const confidence =
+    typeof confidenceRaw === 'number'
+      ? Math.round(confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw)
+      : 85;
+
+  // Extract summary
+  const summary =
+    resultData?.summary ||
+    extractSummaryFromMarkdown(formatted) ||
+    'Verification complete.';
+
+  const isTrue = verdict.includes('true');
+  const isFalse = verdict.includes('false');
+  const bgColor = isTrue ? '#dcfce7' : isFalse ? '#fee2e2' : '#fef3c7';
+  const borderColor = isTrue ? '#22c55e' : isFalse ? '#ef4444' : '#f59e0b';
+  const textColor = isTrue ? '#166534' : isFalse ? '#991b1b' : '#92400e';
+  const icon = isTrue ? '✓' : isFalse ? '✗' : '⚠';
 
   // Enable pointer events for the result box so download button works
   selectionBox.style.pointerEvents = 'auto';
@@ -332,13 +398,14 @@ function showResultInSelection(result) {
             font-family: Arial, sans-serif;
             font-size: 18px;
             font-weight: bold;
-          ">${result.message}</h3>
+            text-transform: capitalize;
+          ">${verdict}</h3>
           <p style="
             margin: 4px 0 0 0;
             color: ${textColor};
             font-family: Arial, sans-serif;
             font-size: 12px;
-          ">Confidence: ${(result.confidence * 100).toFixed(0)}%</p>
+          ">Confidence: ${confidence}%</p>
         </div>
       </div>
       <p style="
@@ -347,7 +414,7 @@ function showResultInSelection(result) {
         font-family: Arial, sans-serif;
         font-size: 13px;
         line-height: 1.5;
-      ">${result.summary}</p>
+      ">${summary}</p>
       
       <!-- Download Button -->
       <button id="truthguard-download-btn" style="
@@ -372,7 +439,7 @@ function showResultInSelection(result) {
           <polyline points="7 10 12 15 17 10"></polyline>
           <line x1="12" y1="15" x2="12" y2="3"></line>
         </svg>
-        Download Report (Markdown)
+        Download Report (PDF)
       </button>
       
       <p style="
@@ -382,15 +449,181 @@ function showResultInSelection(result) {
         color: #6b7280;
         font-family: Arial, sans-serif;
         font-size: 11px;
-      ">Auto-closes in 8 seconds • Press ESC to close</p>
+      ">Auto-closes in 10 seconds • Press ESC to close</p>
     </div>
   `;
 
   // Add click handler for download button
   const downloadBtn = selectionBox.querySelector('#truthguard-download-btn');
   if (downloadBtn) {
-    downloadBtn.addEventListener('click', downloadSelectionMarkdown);
+    downloadBtn.addEventListener('click', downloadSelectionPDF);
   }
+}
+
+function showErrorInSelection(errorMessage) {
+  const bgColor = '#fee2e2';
+  const borderColor = '#ef4444';
+  const textColor = '#991b1b';
+
+  selectionBox.style.pointerEvents = 'auto';
+
+  selectionBox.innerHTML = `
+    <div style="
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      background: ${bgColor};
+      border: 3px solid ${borderColor};
+      border-radius: 8px;
+      padding: 20px;
+      overflow: auto;
+    ">
+      <div style="
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      ">
+        <div style="
+          width: 48px;
+          height: 48px;
+          background: ${borderColor};
+          color: white;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 28px;
+          font-weight: bold;
+        ">✗</div>
+        <div>
+          <h3 style="
+            margin: 0;
+            color: ${textColor};
+            font-family: Arial, sans-serif;
+            font-size: 18px;
+            font-weight: bold;
+          ">Error</h3>
+        </div>
+      </div>
+      <p style="
+        margin: 0;
+        color: ${textColor};
+        font-family: Arial, sans-serif;
+        font-size: 13px;
+        line-height: 1.5;
+      ">${
+        errorMessage ||
+        'Failed to verify the selected content. Please try again.'
+      }</p>
+      
+      <p style="
+        margin-top: 12px;
+        padding-top: 12px;
+        border-top: 2px solid ${borderColor};
+        color: #6b7280;
+        font-family: Arial, sans-serif;
+        font-size: 11px;
+      ">Auto-closes in 5 seconds • Press ESC to close</p>
+    </div>
+  `;
+}
+
+// Helper functions for markdown parsing
+function stripFences(s) {
+  return typeof s === 'string'
+    ? s.replace(/^```(?:[\w-]+)?\n/, '').replace(/\n```$/, '')
+    : '';
+}
+
+function extractFieldFromMarkdown(md, field) {
+  if (!md) return undefined;
+  const stripped = stripFences(md);
+
+  const boldRx = new RegExp(
+    `\\*+\\s*${field}\\s*\\*+[:：]?\\s*([^\n\r]+)`,
+    'i'
+  );
+  let m = stripped.match(boldRx);
+  if (m && m[1]) return m[1].trim();
+
+  const noStars = stripped.replace(/\*/g, '');
+  const lineRx = new RegExp(`^\\s*${field}\\s*[:：]\\s*([^\n\r]+)`, 'im');
+  m = noStars.match(lineRx);
+  if (m && m[1]) return m[1].trim();
+
+  const looseRx = new RegExp(`${field}\\s*[:：]?\\s*([\\d\\.]+|\\w+)`, 'i');
+  m = stripped.match(looseRx);
+  if (m && m[1]) return m[1].trim();
+
+  return undefined;
+}
+
+function extractSummaryFromMarkdown(md) {
+  if (!md) return undefined;
+  const stripped = stripFences(md);
+  const lines = stripped.split(/\r?\n/);
+  const startIdx = lines.findIndex(
+    (l) =>
+      l.trim().toLowerCase().startsWith('### summary') ||
+      l.trim().toLowerCase().startsWith('## summary')
+  );
+  if (startIdx === -1) return undefined;
+  const acc = [];
+  for (let i = startIdx + 1; i < lines.length; i++) {
+    if (/^###?\s+/.test(lines[i])) break;
+    if (lines[i].trim()) acc.push(lines[i].trim());
+  }
+  return acc.join(' ').trim();
+}
+
+async function downloadSelectionPDF() {
+  if (!currentSelectionData) return;
+
+  const { text, url, title, timestamp, result } = currentSelectionData;
+
+  // Parse result data
+  const resultData = result?.result || result || {};
+  const formatted = result?.formatted_response || resultData?.raw_final || '';
+
+  let verdictRaw = extractFieldFromMarkdown(formatted, 'Verdict');
+  if (!verdictRaw) verdictRaw = resultData?.verdict;
+  const verdict = (verdictRaw || 'unverified').toString();
+
+  let confidenceRaw =
+    extractFieldFromMarkdown(formatted, 'Confidence') ||
+    extractFieldFromMarkdown(formatted, 'Confidence Score');
+  if (confidenceRaw !== undefined) {
+    const numberMatch = (confidenceRaw + '').match(/[\d.]+/);
+    if (numberMatch) {
+      confidenceRaw = parseFloat(numberMatch[0]);
+    }
+  }
+  if (confidenceRaw === undefined) confidenceRaw = resultData?.confidence;
+  const confidence =
+    typeof confidenceRaw === 'number'
+      ? Math.round(confidenceRaw <= 1 ? confidenceRaw * 100 : confidenceRaw)
+      : 0;
+
+  // Send message to background script to generate PDF
+  chrome.runtime.sendMessage({
+    action: 'generatePDF',
+    data: {
+      title: 'TruthGuard Fact Check Report (Selection)',
+      pageTitle: title,
+      url: url,
+      scannedAt: new Date(timestamp).toLocaleString(),
+      content: text.substring(0, 1000),
+      verdict: verdict,
+      confidence: confidence,
+      summary:
+        resultData?.summary ||
+        extractSummaryFromMarkdown(formatted) ||
+        'Verification complete.',
+      fullReport: stripFences(formatted),
+      mode: 'selection',
+    },
+  });
 }
 
 function downloadSelectionMarkdown() {

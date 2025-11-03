@@ -3,8 +3,12 @@
   "name": "TruthGuard - Fact Checker",
   "version": "1.0.0",
   "description": "Detect false news and verify facts on any webpage",
-  "permissions": ["activeTab", "scripting", "storage"],
-  "host_permissions": ["http://localhost:5000/*", "<all_urls>"],
+  "permissions": ["activeTab", "scripting", "storage", "downloads"],
+  "host_permissions": [
+    "http://localhost:5000/*",
+    "http://34.122.181.2:8080/*",
+    "<all_urls>"
+  ],
   "action": {
     "default_popup": "popup.html",
     "default_icon": "icons/icon.svg"
